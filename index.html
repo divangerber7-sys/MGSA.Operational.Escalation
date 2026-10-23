@@ -1,0 +1,1462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MGSA Operational Escalation Dashboard — Independent Portfolio Exercise</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#1B3A5C;--blue:#2E75B6;--purple:#5C3A7A;--teal:#0D6E6E;
+  --text:#1A1A1A;--text2:#595959;--border:#CCCCCC;
+  --bg:#F8F9FA;--bg2:#F2F2F2;
+  --rf:#F4CCCC;--rt:#A61C00;
+  --of:#FCE4D6;--ot:#C55A11;
+  --af:#FFF3CD;--at:#9C6500;
+  --gf:#D9EAD3;--gt:#1E6B3C;
+  --bf:#D6E4F0;--bt:#1B3A5C;
+  --pf:#EDE4F5;--pt:#5C3A7A;
+}
+body{font-family:Arial,Helvetica,sans-serif;font-size:14px;color:var(--text);background:#fff}
+
+/* ── HEADER ── */
+.pg-hdr{background:var(--navy);display:flex;flex-direction:column}
+.hdr-top{display:flex;justify-content:space-between;align-items:center;padding:14px 24px 0}
+.hdr-org{font-size:11px;font-weight:700;color:rgba(255,255,255,.65);letter-spacing:.1em;text-transform:uppercase}
+.hdr-ref{font-size:11px;color:rgba(255,255,255,.4);letter-spacing:.04em}
+.hdr-main{padding:12px 24px 0}
+.hdr-title{font-size:26px;font-weight:700;color:#fff;letter-spacing:-.3px}
+.hdr-sub{font-size:13px;color:rgba(255,255,255,.65);margin-top:4px}
+
+/* ── PURE-CSS TABS ── */
+.tab-radios{display:none}
+.tab-bar{display:flex;padding:0 24px;gap:0;overflow-x:auto;margin-top:12px}
+.tab{padding:12px 20px;font-size:13px;font-weight:700;cursor:pointer;color:rgba(255,255,255,.5);border-bottom:3px solid transparent;white-space:nowrap;font-family:Arial,Helvetica,sans-serif;transition:color .15s,border-color .15s;user-select:none}
+.tab:hover{color:rgba(255,255,255,.85)}
+.panel{display:none;padding:24px}
+
+#t1:checked ~ .pg-hdr .tab[for="t1"],
+#t2:checked ~ .pg-hdr .tab[for="t2"],
+#t3:checked ~ .pg-hdr .tab[for="t3"],
+#t4:checked ~ .pg-hdr .tab[for="t4"],
+#t5:checked ~ .pg-hdr .tab[for="t5"],
+#t6:checked ~ .pg-hdr .tab[for="t6"],
+#t7:checked ~ .pg-hdr .tab[for="t7"]
+{color:#fff;border-bottom-color:rgba(255,255,255,.9)}
+
+#t1:checked ~ #p1,
+#t2:checked ~ #p2,
+#t3:checked ~ #p3,
+#t4:checked ~ #p4,
+#t5:checked ~ #p5,
+#t6:checked ~ #p6,
+#t7:checked ~ #p7
+{display:block}
+
+/* ── METRIC CARDS ── */
+.mrow{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:20px}
+.mc{background:var(--bg);border:.5px solid var(--border);border-radius:6px;padding:14px 16px}
+.ml{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text2);margin-bottom:4px}
+.mv{font-size:24px;font-weight:700}
+.ms{font-size:11px;color:var(--text2);margin-top:3px}
+
+/* ── SECTION TITLE ── */
+.st{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--navy);margin-bottom:10px}
+
+/* ── BADGES ── */
+.badge{display:inline-block;font-size:11px;font-weight:700;padding:3px 9px;border-radius:3px;white-space:nowrap}
+.bc{background:var(--rf);color:var(--rt)}
+.bh{background:var(--of);color:var(--ot)}
+.bm{background:var(--af);color:var(--at)}
+.bg{background:var(--gf);color:var(--gt)}
+.bp{background:var(--bf);color:var(--bt)}
+.bpu{background:var(--pf);color:var(--pt)}
+
+/* ── TABLES ── */
+.tw{overflow-x:auto;border:.5px solid var(--border);border-radius:6px;margin-bottom:16px}
+.tw.sh{max-height:460px;overflow-y:auto}
+.dt{width:100%;border-collapse:collapse;font-size:12px}
+.dt th{background:var(--navy);color:#fff;padding:9px 10px;font-weight:700;font-size:11px;text-align:left;position:sticky;top:0;z-index:2;white-space:nowrap;letter-spacing:.05em;text-transform:uppercase}
+.dt td{padding:8px 10px;border-bottom:.5px solid var(--border);vertical-align:top}
+.dt tr:last-child td{border-bottom:none}
+.dt tr:hover td{background:var(--bg2)}
+.dt td.ctr{text-align:center;vertical-align:middle}
+.dt td.num{text-align:right;font-variant-numeric:tabular-nums;vertical-align:middle}
+.dt td.mid{vertical-align:middle}
+
+/* ── LAYOUT ── */
+.cg{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.cg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px}
+.cb{background:var(--bg);border:.5px solid var(--border);border-radius:6px;padding:14px;margin-bottom:16px}
+.cb0{background:var(--bg);border:.5px solid var(--border);border-radius:6px;padding:14px;margin-bottom:0}
+
+/* ── CARDS ── */
+.card{background:#fff;border:.5px solid var(--border);border-left:4px solid;border-radius:6px;padding:12px 14px;margin-bottom:10px}
+.card:last-child{margin-bottom:0}
+.card-hdr{display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px}
+.card-title{font-size:13px;font-weight:700;flex:1}
+.card-sub{font-size:12px;color:var(--text2);line-height:1.55}
+
+/* ── PROGRESS BARS ── */
+.cbar-wrap{margin-bottom:9px}
+.cbar-wrap:last-child{margin-bottom:0}
+.cbar-label{display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px}
+.cbar{height:12px;background:var(--bg2);border-radius:3px;overflow:hidden}
+.cbar-fill{height:100%;border-radius:3px}
+
+/* ── STAT ROWS ── */
+.stat-row{display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:.5px solid var(--border);font-size:12px}
+.stat-row:last-child{border-bottom:none}
+.stat-label{color:var(--text2);flex:1;padding-right:8px}
+.stat-val{font-weight:700;text-align:right;flex-shrink:0}
+
+/* ── NOTICES ── */
+.notice{border:.5px solid;border-radius:6px;padding:11px 13px;margin-bottom:10px;font-size:12px;line-height:1.6}
+.notice:last-child{margin-bottom:0}
+.notice-r{background:var(--rf);border-color:#E24B4A;color:var(--rt)}
+.notice-a{background:var(--of);border-color:#EF9F27;color:var(--ot)}
+.notice-g{background:var(--gf);border-color:#4CAF50;color:var(--gt)}
+.notice-b{background:var(--bf);border-color:var(--blue);color:var(--bt)}
+.notice-p{background:var(--pf);border-color:var(--purple);color:var(--pt)}
+
+/* ── RAG DOTS ── */
+.rag{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:middle;flex-shrink:0}
+.rag-r{background:#E24B4A}
+.rag-a{background:#EF9F27}
+.rag-g{background:#4CAF50}
+.rag-b{background:#2E75B6}
+.rag-p{background:#5C3A7A}
+
+/* ── VALUE COLOURS ── */
+.v-g{color:var(--gt);font-weight:700}
+.v-a{color:var(--at);font-weight:700}
+.v-r{color:var(--rt);font-weight:700}
+.v-b{color:var(--bt);font-weight:700}
+
+/* ── ESCALATION FUNNEL ── */
+.funnel{display:flex;flex-direction:column;gap:6px}
+.funnel-tier{border-radius:4px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between}
+.funnel-label{font-size:12px;font-weight:700}
+.funnel-count{font-size:20px;font-weight:700}
+.funnel-sub{font-size:11px;opacity:.8}
+.ft-1{background:var(--rf);color:var(--rt)}
+.ft-2{background:var(--of);color:var(--ot)}
+.ft-3{background:var(--af);color:var(--at)}
+.ft-4{background:var(--gf);color:var(--gt)}
+.ft-5{background:var(--bf);color:var(--bt)}
+
+/* ── OWNER BLOCK ── */
+.owner-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.owner-card{background:#fff;border:.5px solid var(--border);border-radius:6px;border-top:3px solid;padding:11px 13px}
+.owner-tier{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--text2);margin-bottom:4px}
+.owner-name{font-size:13px;font-weight:700;margin-bottom:2px}
+.owner-role{font-size:11px;color:var(--text2);margin-bottom:6px}
+
+/* ── TIMELINE ── */
+.tl{position:relative;padding-left:22px}
+.tl::before{content:'';position:absolute;left:4px;top:6px;bottom:6px;width:2px;background:var(--border)}
+.tl-item{position:relative;margin-bottom:14px;padding-bottom:14px;border-bottom:.5px solid var(--border)}
+.tl-item:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0}
+.tl-dot{position:absolute;left:-18px;top:3px;width:12px;height:12px;border-radius:50%;border:2px solid #fff}
+.tl-time{font-size:10px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px}
+.tl-actor{font-size:11px;color:var(--blue);font-weight:700;margin-bottom:2px}
+.tl-title{font-size:12px;font-weight:700;margin-bottom:2px}
+.tl-desc{font-size:12px;color:var(--text2);line-height:1.5}
+
+/* ── ESCALATION STATUS STRIP ── */
+.esc-strip{background:#fff;border:.5px solid var(--border);border-radius:6px;overflow:hidden}
+.esc-hdr{display:grid;grid-template-columns:90px 100px 1fr 110px 90px 90px 90px;background:var(--navy);padding:8px 10px;gap:0}
+.esc-hdr span{font-size:11px;font-weight:700;color:#fff;text-transform:uppercase;letter-spacing:.05em}
+.esc-row{display:grid;grid-template-columns:90px 100px 1fr 110px 90px 90px 90px;padding:8px 10px;border-bottom:.5px solid var(--border);font-size:12px;align-items:start;gap:0}
+.esc-row:last-child{border-bottom:none}
+.esc-row:hover{background:var(--bg2)}
+.esc-ref{font-weight:700}
+.esc-age{color:var(--text2);font-size:11px}
+.esc-desc{line-height:1.5;padding:0 8px}
+.esc-owner{font-weight:700;font-size:11px;padding-right:6px}
+.esc-stat{text-align:center}
+.esc-due{text-align:right;font-size:11px;color:var(--text2);padding-right:6px}
+.esc-pri{text-align:right}
+
+/* ── BREACH INDICATOR ── */
+.breach-pill{display:inline-block;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;white-space:nowrap}
+.breach-r{background:var(--rt);color:#fff}
+.breach-a{background:var(--ot);color:#fff}
+.breach-g{background:var(--gt);color:#fff}
+
+/* ── ACTION ROW ── */
+.act-row{display:flex;gap:10px;padding:9px 0;border-bottom:.5px solid var(--border);font-size:12px;align-items:flex-start}
+.act-row:last-child{border-bottom:none}
+.act-ref{min-width:72px;font-weight:700;flex-shrink:0;color:var(--navy)}
+.act-body{flex:1}
+.act-title{font-weight:700;margin-bottom:2px}
+.act-desc{color:var(--text2);line-height:1.5}
+.act-meta{display:flex;gap:8px;margin-top:4px;flex-wrap:wrap}
+
+/* ── RACI TABLE ── */
+.raci-g{background:var(--gf);color:var(--gt);font-weight:700;text-align:center;padding:6px;border:.5px solid var(--border);font-size:11px}
+.raci-b{background:var(--bf);color:var(--bt);font-weight:700;text-align:center;padding:6px;border:.5px solid var(--border);font-size:11px}
+.raci-a{background:var(--af);color:var(--at);font-weight:700;text-align:center;padding:6px;border:.5px solid var(--border);font-size:11px}
+.raci-n{background:var(--bg2);color:var(--text2);text-align:center;padding:6px;border:.5px solid var(--border);font-size:11px}
+.raci-hdr{background:var(--navy);color:#fff;font-size:11px;font-weight:700;text-align:center;padding:8px 6px;border:.5px solid var(--border);letter-spacing:.04em;white-space:nowrap}
+.raci-lbl{background:var(--bg);font-size:12px;font-weight:700;padding:8px 10px;border:.5px solid var(--border);vertical-align:middle}
+.raci-table{width:100%;border-collapse:collapse}
+
+p.intro{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.6}
+/* ── PORTFOLIO DISCLAIMER ── */
+.portfolio-disclaimer{
+  position:sticky;top:0;z-index:9999;width:100%;
+  background:#7A1F1F;color:#ffffff;
+  font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;
+  padding:10px 16px;box-sizing:border-box;text-align:center;
+  border-bottom:3px solid #4a1212;
+}
+.portfolio-disclaimer strong{font-weight:700}
+.portfolio-disclaimer a{color:#ffffff;text-decoration:underline;font-weight:700}
+@media (max-width:640px){.portfolio-disclaimer{font-size:12px;padding:10px 12px}}
+.portfolio-about{max-width:1100px;margin:32px auto 40px;padding:20px 24px;border:1px solid var(--border);border-left:4px solid #7A1F1F;background:var(--bg);font-size:13px;line-height:1.6;color:var(--text2);scroll-margin-top:90px}
+.portfolio-about h2{font-size:15px;color:var(--navy);margin-bottom:8px}
+.portfolio-about p+p{margin-top:8px}
+.pd-short{display:none}
+.cg>*,.cg3>*,.mrow>*{min-width:0}
+
+/* ── RESPONSIVE ── */
+@media (max-width:900px){
+  .cg3{grid-template-columns:1fr 1fr}
+}
+@media (max-width:760px){
+  .pd-full{display:none}.pd-short{display:inline}
+  .cg,.cg3{grid-template-columns:1fr}
+  .panel{padding:16px}
+  .hdr-top{flex-wrap:wrap;gap:4px;padding:12px 16px 0}
+  .hdr-main{padding:10px 16px 0}.hdr-title{font-size:21px}
+  .tab-bar{padding:0 8px}.tab{padding:12px 14px}
+  .cb0{overflow-x:auto}
+  .esc-strip{overflow-x:auto}.esc-hdr,.esc-row{min-width:760px}
+  .owner-grid{grid-template-columns:1fr}
+  .stat-row{gap:10px}.stat-val{text-align:right}
+  .cbar-label{gap:10px}
+  .act-row{flex-wrap:wrap}
+  .portfolio-about{margin:24px 16px 32px;padding:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="portfolio-disclaimer">
+  &#9888; <strong>Fictional company &amp; data &mdash; independent portfolio exercise by Divan Gerber.</strong>
+  <span class="pd-short">Not a role held or real employer information. All figures simulated; real vendor names used illustratively.</span>
+  <span class="pd-full">All organizations, figures, and scenarios on this site are simulated for demonstration purposes.
+  Not a role held or real employer information. This page names several real companies and products (including SAP, Microsoft Azure, Microsoft Teams, AWS, MEDITECH, Salesforce, ServiceNow, Verifone, CrowdStrike, Darktrace, NCR Voyix, Vodacom, Rain, Deloitte) within an entirely fictional operational scenario. Every escalation, incident, SLA figure, credit, cost, contract position, and dispute shown is invented for this exercise and does not describe any real system, outage, negotiation, or event involving those companies. This is a static design prototype, not a live monitoring or escalation feed.</span>
+  <a href="#about-this-portfolio">Read more</a>
+</div>
+
+<input class="tab-radios" type="radio" name="tabs" id="t1" checked>
+<input class="tab-radios" type="radio" name="tabs" id="t2">
+<input class="tab-radios" type="radio" name="tabs" id="t3">
+<input class="tab-radios" type="radio" name="tabs" id="t4">
+<input class="tab-radios" type="radio" name="tabs" id="t5">
+<input class="tab-radios" type="radio" name="tabs" id="t6">
+<input class="tab-radios" type="radio" name="tabs" id="t7">
+
+<div class="pg-hdr">
+  <div class="hdr-top">
+    <div class="hdr-org">MedRetail Group South Africa (Fictional)</div>
+    <div class="hdr-ref">Independent Portfolio Exercise &nbsp;|&nbsp; Simulated period: Q2 FY2025</div>
+  </div>
+  <div class="hdr-main">
+    <div class="hdr-title">Operational Escalation Dashboard</div>
+    <div class="hdr-sub">2 active P1 escalations &bull; 11 Board-level items pending &bull; 6 overdue SLA breach credits &bull; 14 open audit actions &bull; Simulated snapshot: 20 May 2025 (static data, not a live feed)</div>
+  </div>
+  <div class="tab-bar">
+    <label class="tab" for="t1">Escalation Overview</label>
+    <label class="tab" for="t2">Active Escalations</label>
+    <label class="tab" for="t3">Board &amp; Executive Items</label>
+    <label class="tab" for="t4">Vendor Escalations</label>
+    <label class="tab" for="t5">Overdue Actions</label>
+    <label class="tab" for="t6">Escalation Pathways</label>
+    <label class="tab" for="t7">Governance &amp; Compliance</label>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════ TAB 1 — ESCALATION OVERVIEW -->
+<div class="panel" id="p1">
+
+  <div class="notice notice-r" style="margin-bottom:8px">
+    <strong>P1 Dual Escalation Active &mdash; 20 May 2025:</strong> INC-0441 (SAP ERP / Azure I/O) and INC-0440 (Vodacom WAN / 4 stores isolated) are both under active NOCC management in this simulated scenario. CIO, CFO, and CEO notified 04:45 SAST. Both incidents are escalated beyond their 2-hour MTTR SLA targets. Total business impact estimate: R705K and rising.
+  </div>
+  <div class="notice notice-a">
+    <strong>11 items require Board or executive decision by July 2025:</strong> R18M EDR investment, R12M multi-cloud (AWS), Azure SLA renegotiation, POPIA Information Officer appointment, AI Ethics Panel constitution, and 6 further investment or governance decisions. All are gating further risk reduction.
+  </div>
+
+  <div class="mrow">
+    <div class="mc"><div class="ml">Active P1 escalations</div><div class="mv" style="color:var(--rt)">2</div><div class="ms">Both beyond 2h MTTR</div></div>
+    <div class="mc"><div class="ml">Active P2 escalations</div><div class="mv" style="color:var(--ot)">5</div><div class="ms">Under management</div></div>
+    <div class="mc"><div class="ml">Board / exec items</div><div class="mv" style="color:var(--at)">11</div><div class="ms">Decisions due July 2025</div></div>
+    <div class="mc"><div class="ml">Vendor escalations open</div><div class="mv" style="color:var(--at)">6</div><div class="ms">Vodacom 4 &bull; Azure 1 &bull; NCR 1</div></div>
+    <div class="mc"><div class="ml">Tracked actions (all)</div><div class="mv" style="color:var(--rt)">19</div><div class="ms">9 past due &bull; 10 upcoming</div></div>
+    <div class="mc"><div class="ml">SLA breach credits open</div><div class="mv" style="color:var(--at)">6</div><div class="ms">Vodacom &mdash; R110K claimed</div></div>
+    <div class="mc"><div class="ml">Open audit findings</div><div class="mv" style="color:var(--at)">14</div><div class="ms">7 High &bull; 7 Moderate</div></div>
+    <div class="mc"><div class="ml">Regulatory deadlines &lt;90d</div><div class="mv" style="color:var(--rt)">9</div><div class="ms">3 critical &bull; 6 high</div></div>
+  </div>
+
+  <div class="cg">
+    <div>
+      <!-- Escalation funnel -->
+      <div class="cb">
+        <div class="st">Escalation funnel &mdash; all open items by tier</div>
+        <div class="funnel">
+          <div class="funnel-tier ft-1">
+            <div>
+              <div class="funnel-label">Tier 1 &mdash; Active P1 incidents</div>
+              <div class="funnel-sub">NOCC bridge open &bull; Executive notified &bull; Every 30 min update</div>
+            </div>
+            <div class="funnel-count">2</div>
+          </div>
+          <div class="funnel-tier ft-2">
+            <div>
+              <div class="funnel-label">Tier 2 &mdash; Active P2 &amp; vendor SLA breaches</div>
+              <div class="funnel-sub">VP Infra ownership &bull; Daily management &bull; SLA credit active</div>
+            </div>
+            <div class="funnel-count">11</div>
+          </div>
+          <div class="funnel-tier ft-3">
+            <div>
+              <div class="funnel-label">Tier 3 &mdash; Board &amp; executive decisions required</div>
+              <div class="funnel-sub">Investment &bull; Policy &bull; Governance &mdash; July 2025 committee</div>
+            </div>
+            <div class="funnel-count">11</div>
+          </div>
+          <div class="funnel-tier ft-4">
+            <div>
+              <div class="funnel-label">Tier 4 &mdash; Overdue &amp; at-risk compliance &amp; audit actions</div>
+              <div class="funnel-sub">PIRs &bull; Regulatory &bull; POPIA &bull; Audit findings</div>
+            </div>
+            <div class="funnel-count">19</div>
+          </div>
+          <div class="funnel-tier ft-5">
+            <div>
+              <div class="funnel-label">Tier 5 &mdash; Structural risks (tracked, mitigating)</div>
+              <div class="funnel-sub">IR register &bull; 9 open items &bull; 3 critical</div>
+            </div>
+            <div class="funnel-count">9</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary by category -->
+      <div class="cb0">
+        <div class="st">Open escalations by category</div>
+        <div class="cbar-wrap">
+          <div class="cbar-label"><span>Technology operations (incidents, PIRs)</span><span style="font-weight:700">9</span></div>
+          <div class="cbar"><div class="cbar-fill" style="width:100%;background:var(--rt)"></div></div>
+        </div>
+        <div class="cbar-wrap">
+          <div class="cbar-label"><span>Board / executive investment decisions</span><span style="font-weight:700">11</span></div>
+          <div class="cbar"><div class="cbar-fill" style="width:100%;background:var(--ot)"></div></div>
+        </div>
+        <div class="cbar-wrap">
+          <div class="cbar-label"><span>Vendor SLA &amp; commercial disputes</span><span style="font-weight:700">6</span></div>
+          <div class="cbar"><div class="cbar-fill" style="width:55%;background:#EF9F27"></div></div>
+        </div>
+        <div class="cbar-wrap">
+          <div class="cbar-label"><span>POPIA &amp; regulatory compliance</span><span style="font-weight:700">9</span></div>
+          <div class="cbar"><div class="cbar-fill" style="width:82%;background:#EF9F27"></div></div>
+        </div>
+        <div class="cbar-wrap">
+          <div class="cbar-label"><span>Audit findings (internal &amp; external)</span><span style="font-weight:700">14</span></div>
+          <div class="cbar"><div class="cbar-fill" style="width:100%;background:var(--at)"></div></div>
+        </div>
+        <div class="cbar-wrap">
+          <div class="cbar-label"><span>AI governance &amp; Ethics Panel</span><span style="font-weight:700">5</span></div>
+          <div class="cbar"><div class="cbar-fill" style="width:46%;background:var(--purple)"></div></div>
+        </div>
+        <div class="cbar-wrap">
+          <div class="cbar-label"><span>Infrastructure risk register (structural)</span><span style="font-weight:700">9</span></div>
+          <div class="cbar"><div class="cbar-fill" style="width:82%;background:var(--blue)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- Escalation owners -->
+      <div class="cb">
+        <div class="st">Escalation ownership &mdash; current accountability map</div>
+        <div class="owner-grid">
+          <div class="owner-card" style="border-top-color:var(--rt)">
+            <div class="owner-tier">P1 Incident Management</div>
+            <div class="owner-name">T. Dlamini</div>
+            <div class="owner-role">NOCC Shift Manager</div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Items owned</span><span class="stat-val" style="font-size:11px">2 active P1s</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Bridge status</span><span class="stat-val" style="font-size:11px"><span class="badge bc">Open</span></span></div>
+          </div>
+          <div class="owner-card" style="border-top-color:var(--ot)">
+            <div class="owner-tier">Infrastructure Escalations</div>
+            <div class="owner-name">S. van der Merwe</div>
+            <div class="owner-role">VP Infrastructure</div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Items owned</span><span class="stat-val" style="font-size:11px">6 (P2 + vendor)</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Board items</span><span class="stat-val" style="font-size:11px">4 awaiting decision</span></div>
+          </div>
+          <div class="owner-card" style="border-top-color:var(--at)">
+            <div class="owner-tier">Compliance &amp; Data Escalations</div>
+            <div class="owner-name">A. Naidoo</div>
+            <div class="owner-role">CIO</div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Items owned</span><span class="stat-val" style="font-size:11px">11 exec items</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Next board</span><span class="stat-val" style="font-size:11px">July 2025</span></div>
+          </div>
+          <div class="owner-card" style="border-top-color:var(--purple)">
+            <div class="owner-tier">AI &amp; Data Governance</div>
+            <div class="owner-name">CDO (role)</div>
+            <div class="owner-role">Chief Data Officer</div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Items owned</span><span class="stat-val" style="font-size:11px">5 AI governance</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Ethics Panel</span><span class="stat-val" style="font-size:11px">Forming &mdash; Q4</span></div>
+          </div>
+          <div class="owner-card" style="border-top-color:var(--teal)">
+            <div class="owner-tier">Legal &amp; Regulatory</div>
+            <div class="owner-name">Legal / IO (to appoint)</div>
+            <div class="owner-role">Information Officer (vacant)</div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Items owned</span><span class="stat-val" style="font-size:11px">9 POPIA items</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">IO appointment</span><span class="stat-val" style="font-size:11px"><span class="badge bc">Overdue</span></span></div>
+          </div>
+          <div class="owner-card" style="border-top-color:var(--blue)">
+            <div class="owner-tier">Security Escalations</div>
+            <div class="owner-name">CISO (role)</div>
+            <div class="owner-role">Chief Information Security Officer</div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Items owned</span><span class="stat-val" style="font-size:11px">4 (EDR, DR, ISO)</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Board ask</span><span class="stat-val" style="font-size:11px">R18M EDR spend</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cb0">
+        <div class="st">Upcoming escalation deadlines</div>
+        <div class="stat-row"><span class="stat-label"><span class="rag rag-r"></span><strong>6 Jun 2025</strong> &mdash; CPA claim (HR screening vendor) documented</span><span><span class="badge bc">17 days</span></span></div>
+        <div class="stat-row"><span class="stat-label"><span class="rag rag-r"></span><strong>22 Jun 2025</strong> &mdash; Vodacom formal SLA breach notices issued</span><span><span class="badge bc">33 days</span></span></div>
+        <div class="stat-row"><span class="stat-label"><span class="rag rag-r"></span><strong>30 Jun 2025</strong> &mdash; 9 outstanding DPAs signed</span><span><span class="badge bc">41 days</span></span></div>
+        <div class="stat-row"><span class="stat-label"><span class="rag rag-a"></span><strong>Jul 2025 Board</strong> &mdash; R18M EDR + R12M multi-cloud decisions</span><span><span class="badge bh">Board</span></span></div>
+        <div class="stat-row"><span class="stat-label"><span class="rag rag-a"></span><strong>31 Jul 2025</strong> &mdash; POPIA Information Officer appointed</span><span><span class="badge bc">72 days</span></span></div>
+        <div class="stat-row"><span class="stat-label"><span class="rag rag-a"></span><strong>31 Aug 2025</strong> &mdash; ISO 27001 surveillance audit evidence packs</span><span><span class="badge bh">High</span></span></div>
+        <div class="stat-row"><span class="stat-label"><span class="rag rag-a"></span><strong>30 Sep 2025</strong> &mdash; Azure POPIA s72 cross-border assessment</span><span><span class="badge bm">Due Q3</span></span></div>
+        <div class="stat-row"><span class="stat-label"><span class="rag rag-a"></span><strong>31 Oct 2025</strong> &mdash; PCI-DSS v4.0 ROC submission</span><span><span class="badge bm">Due Q3</span></span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════ TAB 2 — ACTIVE ESCALATIONS -->
+<div class="panel" id="p2">
+
+  <p class="intro">Active escalations are incidents, issues, or decisions that have been formally elevated beyond their normal management level because they exceed SLA, require investment authority, involve patient safety, have regulatory implications, or have been unresolved beyond agreed timelines. All P1 incidents are automatically escalated. P2 incidents escalate if they breach their 4-hour MTTR. The table below is ordered by severity and business impact.</p>
+
+  <div class="mrow">
+    <div class="mc"><div class="ml">P1 active</div><div class="mv" style="color:var(--rt)">2</div><div class="ms">Both SLA-breached</div></div>
+    <div class="mc"><div class="ml">P2 active</div><div class="mv" style="color:var(--ot)">5</div><div class="ms">2 breaching 4h SLA</div></div>
+    <div class="mc"><div class="ml">Total business impact</div><div class="mv" style="color:var(--rt)">R705K+</div><div class="ms">Estimated today</div></div>
+    <div class="mc"><div class="ml">Sites affected</div><div class="mv" style="color:var(--at)">36</div><div class="ms">Stores + clinical</div></div>
+    <div class="mc"><div class="ml">Manual ops active</div><div class="mv" style="color:var(--at)">23</div><div class="ms">Paper dispensing SOPs</div></div>
+    <div class="mc"><div class="ml">Patient safety events</div><div class="mv" style="color:var(--gt)">0</div><div class="ms">None confirmed</div></div>
+    <div class="mc"><div class="ml">Exec bridge open</div><div class="mv" style="color:var(--at)">Yes</div><div class="ms">CIO monitoring</div></div>
+    <div class="mc"><div class="ml">Vendor bridges open</div><div class="mv">2</div><div class="ms">Azure &bull; Vodacom</div></div>
+  </div>
+
+  <!-- Active escalation strip -->
+  <div class="cb">
+    <div class="st">All active escalations &mdash; simulated status</div>
+    <div class="esc-strip">
+      <div class="esc-hdr">
+        <span>Ref</span>
+        <span>Age / opened</span>
+        <span style="padding-left:8px">Escalation description</span>
+        <span>Owner</span>
+        <span style="text-align:center">Status</span>
+        <span style="text-align:right;padding-right:6px">SLA / due</span>
+        <span style="text-align:right">Priority</span>
+      </div>
+
+      <div class="esc-row">
+        <div class="esc-ref">INC-0441</div>
+        <div class="esc-age">2h 43m<br><span style="color:var(--rt);font-size:10px;font-weight:700">SLA BREACH</span></div>
+        <div class="esc-desc"><strong>SAP S/4HANA ERP degradation &mdash; Azure I/O saturation.</strong> 23 stores on manual paper dispensing. Azure TAM engaged. Batch jobs suspended. ETA restore 07:30 SAST. Est. impact R561K rising.</div>
+        <div class="esc-owner">VP Infra<br>T. Dlamini</div>
+        <div class="esc-stat"><span class="badge bc">Active P1</span></div>
+        <div class="esc-due">2h target<br><span class="breach-pill breach-r">+43m breach</span></div>
+        <div class="esc-pri"><span class="badge bc">Critical</span></div>
+      </div>
+
+      <div class="esc-row">
+        <div class="esc-ref">INC-0440</div>
+        <div class="esc-age">4h 16m<br><span style="color:var(--rt);font-size:10px;font-weight:700">SLA BREACH</span></div>
+        <div class="esc-desc"><strong>Vodacom MPLS fibre cut &mdash; 23 stores degraded, 4 isolated.</strong> Stores #047, #052, #061, #078 fully offline (no LTE). Fibre repair crew ETA 09:00 SAST. SLA credit lodged. Est. impact R102K and rising.</div>
+        <div class="esc-owner">VP Infra<br>K. Mokoena</div>
+        <div class="esc-stat"><span class="badge bc">Active P1</span></div>
+        <div class="esc-due">2h target<br><span class="breach-pill breach-r">+2h16m breach</span></div>
+        <div class="esc-pri"><span class="badge bc">Critical</span></div>
+      </div>
+
+      <div class="esc-row">
+        <div class="esc-ref">INC-0438</div>
+        <div class="esc-age">11h 38m<br><span style="color:var(--at);font-size:10px;font-weight:700">P2 ACTIVE</span></div>
+        <div class="esc-desc"><strong>MedScript dispensing slow response &mdash; 14 Cape Town metro stores.</strong> v4.7.1 DB query regression. Patch 4.7.2 queued for 06:00. Workaround: pharmacists using extended queue patience protocol.</div>
+        <div class="esc-owner">Pharmacy IT<br>NOCC</div>
+        <div class="esc-stat"><span class="badge bh">P2 Active</span></div>
+        <div class="esc-due">4h target<br><span class="breach-pill breach-a">Breached</span></div>
+        <div class="esc-pri"><span class="badge bh">High</span></div>
+      </div>
+
+      <div class="esc-row">
+        <div class="esc-ref">INC-0437</div>
+        <div class="esc-age">17h 55m<br><span style="color:var(--at);font-size:10px;font-weight:700">P2 ACTIVE</span></div>
+        <div class="esc-desc"><strong>Loyalty points redemption timeout &mdash; eCommerce checkout.</strong> Salesforce API timeout extended. Failure rate down from 12% to 1.4%. Release 3.2 tonight expected to fully resolve. Customer impact: intermittent checkout failures.</div>
+        <div class="esc-owner">CDO team<br>NOCC</div>
+        <div class="esc-stat"><span class="badge bm">Monitoring</span></div>
+        <div class="esc-due">4h target<br><span class="breach-pill breach-a">Breached</span></div>
+        <div class="esc-pri"><span class="badge bh">High</span></div>
+      </div>
+
+      <div class="esc-row">
+        <div class="esc-ref">INC-0435</div>
+        <div class="esc-age">31h+<br><span style="color:var(--at);font-size:10px;font-weight:700">P2 ACTIVE</span></div>
+        <div class="esc-desc"><strong>CrowdStrike EDR sensor failure &mdash; 38 endpoints dropped.</strong> 22 of 38 sensors reinstalled. 16 remaining scheduled today. Security exposure at affected stores mitigated by Darktrace NDR network-layer detection.</div>
+        <div class="esc-owner">CISO<br>NOCC</div>
+        <div class="esc-stat"><span class="badge bm">Monitoring</span></div>
+        <div class="esc-due">4h target<br><span class="breach-pill breach-a">Breached</span></div>
+        <div class="esc-pri"><span class="badge bh">High</span></div>
+      </div>
+
+      <div class="esc-row">
+        <div class="esc-ref">INC-0434</div>
+        <div class="esc-age">29h+<br><span style="color:var(--at);font-size:10px;font-weight:700">P2 ACTIVE</span></div>
+        <div class="esc-desc"><strong>MEDITECH FHIR API latency &mdash; 8 clinical facilities (4&ndash;8s response).</strong> Azure NSG change CHG-1182 completed. Monitoring for normalisation. Worst affected: Clinic #031-C (Limpopo, 8.4s latency) also compounded by WAN issue.</div>
+        <div class="esc-owner">CMIO / IT<br>NOCC</div>
+        <div class="esc-stat"><span class="badge bm">Monitoring</span></div>
+        <div class="esc-due">4h target<br><span class="breach-pill breach-a">Breached</span></div>
+        <div class="esc-pri"><span class="badge bh">High</span></div>
+      </div>
+
+      <div class="esc-row">
+        <div class="esc-ref">INC-0432</div>
+        <div class="esc-age">49h+<br><span style="color:var(--at);font-size:10px;font-weight:700">P2 ACTIVE</span></div>
+        <div class="esc-desc"><strong>Barcode scanner failure &mdash; Gauteng DC aisles 7&ndash;12.</strong> 34 scanners offline. Manual pick process active. Dispatch SLA at Gauteng DC dropped to 83%. Replacement parts ordered &mdash; ETA tomorrow. Pick accuracy 98.7% on manual process.</div>
+        <div class="esc-owner">WMS team<br>DC Manager</div>
+        <div class="esc-stat"><span class="badge bp">Parts awaited</span></div>
+        <div class="esc-due">Parts ETA<br>Tomorrow</div>
+        <div class="esc-pri"><span class="badge bm">Medium</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Concurrent P1 management note -->
+  <div class="cg" style="margin-bottom:0">
+    <div class="cb0">
+      <div class="st">Concurrent P1 management &mdash; NOCC capacity alert</div>
+      <div class="notice notice-a" style="margin-bottom:10px">MGSA's incident management policy (TIMP-003) requires a dedicated Incident Manager per P1. With 2 concurrent P1s active and both bridges being managed by T. Dlamini (NOCC Shift Manager), the policy requirement for a second Incident Manager has been noted as a governance deficit (GA-04). Exec notification SLA of 30 minutes was met (28 minutes), but the policy gap is flagged.</div>
+      <div class="stat-row"><span class="stat-label">Second IM policy (TIMP-003 GA-04)</span><span><span class="badge bc">Policy gap &mdash; not met</span></span></div>
+      <div class="stat-row"><span class="stat-label">Exec notification SLA (30 min)</span><span><span class="badge bg">Met &mdash; 28 min</span></span></div>
+      <div class="stat-row"><span class="stat-label">Bridge chair (both incidents)</span><span class="stat-val">T. Dlamini (NOCC)</span></div>
+      <div class="stat-row"><span class="stat-label">Technical lead &mdash; P1-0441</span><span class="stat-val">S. van der Merwe (VP Infra)</span></div>
+      <div class="stat-row"><span class="stat-label">Technical lead &mdash; P1-0440</span><span class="stat-val">K. Mokoena (Network)</span></div>
+      <div class="stat-row"><span class="stat-label">Duty manager backup available</span><span><span class="badge bm">On call &mdash; not activated</span></span></div>
+      <div class="stat-row"><span class="stat-label">Policy improvement action</span><span class="stat-val">GA-04 &mdash; due 1 Jul 2025</span></div>
+    </div>
+    <div class="cb0">
+      <div class="st">Total business impact estimate &mdash; current escalations</div>
+      <div class="tw" style="margin-bottom:0">
+        <table class="dt">
+          <thead><tr>
+            <th>Incident</th>
+            <th style="width:100px" class="ctr">Impact type</th>
+            <th style="width:90px" class="num">Est. R value</th>
+            <th style="width:80px" class="ctr">Basis</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="font-weight:700">INC-0441 &mdash; SAP ERP</td><td class="ctr">Revenue loss</td><td class="num v-r">R561K</td><td class="ctr">23 stores &times; 3h</td></tr>
+            <tr><td style="font-weight:700">INC-0441 &mdash; SAP ERP</td><td class="ctr">Manual ops cost</td><td class="num">R28K</td><td class="ctr">Staff time</td></tr>
+            <tr><td style="font-weight:700">INC-0441 &mdash; Azure scaling</td><td class="ctr">Cloud cost</td><td class="num">R14K</td><td class="ctr">Ad hoc scaling</td></tr>
+            <tr><td style="font-weight:700">INC-0440 &mdash; WAN outage</td><td class="ctr">Revenue loss</td><td class="num v-r">R68K</td><td class="ctr">4 stores &times; 4h</td></tr>
+            <tr><td style="font-weight:700">INC-0440 &mdash; LTE roaming</td><td class="ctr">Network cost</td><td class="num">R22K</td><td class="ctr">19 stores LTE</td></tr>
+            <tr><td style="font-weight:700">INC-0440 &mdash; Loyalty recon</td><td class="ctr">Ops cost</td><td class="num">R12K</td><td class="ctr">Staff time</td></tr>
+            <tr><td style="font-weight:700">INC-0437 &mdash; eComm timeout</td><td class="ctr">Revenue loss</td><td class="num">Estimate</td><td class="ctr">1.4% checkout fail</td></tr>
+            <tr style="background:var(--bg2)"><td style="font-weight:700">Total (confirmed)</td><td class="ctr"></td><td class="num v-r" style="font-weight:700">R705K+</td><td class="ctr">Growing</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════ TAB 3 — BOARD & EXECUTIVE ITEMS -->
+<div class="panel" id="p3">
+
+  <p class="intro">Eleven items require Board or executive decision by the July 2025 Technology and Risk Committee. These are investment decisions, governance appointments, policy approvals, and regulatory actions that exceed the authority of the technology management team and require Board-level mandate. Each item includes a clear consequence of non-decision and an estimated financial or risk impact.</p>
+
+  <div class="mrow">
+    <div class="mc"><div class="ml">Board items (July 2025)</div><div class="mv" style="color:var(--at)">11</div><div class="ms">All require decision</div></div>
+    <div class="mc"><div class="ml">Total investment ask</div><div class="mv" style="color:var(--at)">R30M</div><div class="ms">EDR + multi-cloud</div></div>
+    <div class="mc"><div class="ml">Risk if no decision</div><div class="mv" style="color:var(--rt)">Critical</div><div class="ms">3 items: operational risk</div></div>
+    <div class="mc"><div class="ml">Regulatory items</div><div class="mv" style="color:var(--rt)">3</div><div class="ms">POPIA &bull; EEA &bull; PCI-DSS</div></div>
+    <div class="mc"><div class="ml">Governance appointments</div><div class="mv" style="color:var(--rt)">2</div><div class="ms">IO &bull; Ethics Panel chair</div></div>
+    <div class="mc"><div class="ml">Policy approvals needed</div><div class="mv" style="color:var(--at)">3</div><div class="ms">AI &bull; POPIA &bull; BC</div></div>
+    <div class="mc"><div class="ml">Vendor renegotiations</div><div class="mv" style="color:var(--at)">3</div><div class="ms">Azure &bull; Vodacom &bull; NCR</div></div>
+    <div class="mc"><div class="ml">Items with cost if deferred</div><div class="mv" style="color:var(--rt)">8</div><div class="ms">Quantified consequence</div></div>
+  </div>
+
+  <!-- Board items detailed -->
+  <div class="st">Board &amp; executive items &mdash; full detail</div>
+
+  <div class="card" style="border-left-color:#E24B4A">
+    <div class="card-hdr">
+      <div class="card-title">BOARD-01 &mdash; R18M Cyber Security Investment &mdash; CrowdStrike EDR full deployment</div>
+      <span class="badge bc">Investment decision</span>
+    </div>
+    <div class="card-sub">59% of MGSA's 6 520 endpoints have no EDR protection. 110 EOS POS stores are running unpatched firmware with 38 critical CVEs. PCI-DSS Req 6.3.3 non-conformance active. Darktrace NDR provides network-layer compensating control only. Full deployment sprint R18M. QSA requires compensating control documentation for October ROC submission.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;font-size:11px">
+      <div><strong>Decision needed:</strong> R18M capital approval</div>
+      <div><strong>Consequence if deferred:</strong> PCI-DSS ROC risk; Oct 2025</div>
+      <div><strong>Owner:</strong> CISO &rarr; CIO &rarr; Board</div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left-color:#E24B4A">
+    <div class="card-hdr">
+      <div class="card-title">BOARD-02 &mdash; R12M Multi-Cloud Investment &mdash; AWS Secondary DR Region</div>
+      <span class="badge bc">Investment decision</span>
+    </div>
+    <div class="card-sub">All MGSA Tier 1 workloads (SAP, MEDITECH, eCommerce, MedScript) run on a single Azure SA North region with no DR failover. A regional Azure outage would take down all Tier 1 systems simultaneously. DR test has not been run in 9 months (overdue by 3 months). AWS secondary region resolves the single-region dependency and enables a tested failover capability.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;font-size:11px">
+      <div><strong>Decision needed:</strong> R12M capital approval</div>
+      <div><strong>Consequence if deferred:</strong> Unmitigated total DR risk</div>
+      <div><strong>Owner:</strong> VP Infra &rarr; CIO &rarr; Board</div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left-color:#EF9F27">
+    <div class="card-hdr">
+      <div class="card-title">BOARD-03 &mdash; POPIA Information Officer Appointment</div>
+      <span class="badge bc">Governance appointment</span>
+    </div>
+    <div class="card-sub">POPIA s55 requires MGSA to formally appoint an Information Officer and register with the Information Regulator. Deadline: 31 July 2025. Without an IO, data subject rights requests are unrouted, breach notifications cannot be formally issued, and the PAIA manual update is blocked. Information Regulator fines: up to R10M.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;font-size:11px">
+      <div><strong>Decision needed:</strong> Candidate approval &amp; Board mandate</div>
+      <div><strong>Consequence if deferred:</strong> Regulator enforcement risk</div>
+      <div><strong>Owner:</strong> Board / CIO</div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left-color:#EF9F27">
+    <div class="card-hdr">
+      <div class="card-title">BOARD-04 &mdash; AI Ethics Panel Constitution &amp; Independent Adviser Appointment</div>
+      <span class="badge bc">Governance appointment</span>
+    </div>
+    <div class="card-sub">AI moratorium on Tier 1/2 deployments is active. 3 AI systems suspended (HR screening, Signify Health, PriceSparrow). Ethics Panel required before any reactivation or new deployment. Independent AI ethics adviser shortlist (Deloitte) due August 2025. Board to ratify Ethics Panel charter and terms of reference.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;font-size:11px">
+      <div><strong>Decision needed:</strong> Panel charter ratification</div>
+      <div><strong>Consequence if deferred:</strong> Continued AI capability gap</div>
+      <div><strong>Owner:</strong> CDO &rarr; Board</div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left-color:#EF9F27">
+    <div class="card-hdr">
+      <div class="card-title">BOARD-05 &mdash; Azure SLA Renegotiation &mdash; Penalty Clause</div>
+      <span class="badge bh">Commercial decision</span>
+    </div>
+    <div class="card-sub">Current Azure MSA (3-year EA to March 2027) has no SLA penalty clause. MGSA has no commercial remedy for Azure-caused outages (SAP I/O saturation: 4 P1s in May, est. R2M+ business impact). Legal team is negotiating. Microsoft is resisting. Board authority may be needed to escalate to a Microsoft executive sponsor and leverage renewal negotiation position.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;font-size:11px">
+      <div><strong>Decision needed:</strong> Negotiation mandate / escalation</div>
+      <div><strong>Consequence if deferred:</strong> Continued uncompensated outages</div>
+      <div><strong>Owner:</strong> Legal / CIO &rarr; Board</div>
+    </div>
+  </div>
+
+  <div class="card" style="border-left-color:#EF9F27">
+    <div class="card-hdr">
+      <div class="card-title">BOARD-06 &mdash; Vodacom Contract Review &amp; WAN Provider Diversification</div>
+      <span class="badge bh">Commercial decision</span>
+    </div>
+    <div class="card-sub">6 Vodacom MPLS SLA breaches in 6 weeks. R110K SLA credits claimed but not fully recovered. 169 stores have no LTE backup &mdash; structural single-WAN dependency. Provider diversification (Rain fibre for top-20 Vodacom fault stores) and contractual penalty enforcement requires Board authority to renegotiate a significant supplier relationship.</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:10px;font-size:11px">
+      <div><strong>Decision needed:</strong> Diversification mandate</div>
+      <div><strong>Consequence if deferred:</strong> Continuing WAN reliability risk</div>
+      <div><strong>Owner:</strong> VP Infra / CFO &rarr; Board</div>
+    </div>
+  </div>
+
+  <div class="cg" style="margin-bottom:0">
+    <div class="cb0">
+      <div class="st">Remaining Board items summary</div>
+      <div class="act-row">
+        <div class="act-ref">BOARD-07</div>
+        <div class="act-body">
+          <div class="act-title">NCR Voyix EOS POS hardware budget approval</div>
+          <div class="act-desc">110-store POS hardware replacement. NCR Voyix supply ETA Q3&ndash;Q4. Capital budget required. PCI-DSS Req 6.3.3 and R412-ticket backlog gated on this decision.</div>
+          <div class="act-meta"><span class="badge bc">Critical</span><span class="badge bm">Capital budget</span></div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div class="act-ref">BOARD-08</div>
+        <div class="act-body">
+          <div class="act-title">AI Procurement Standard &mdash; Board ratification</div>
+          <div class="act-desc">New AI vendor procurement standard (6 mandatory requirements) to be ratified by Board for force of policy. CDO publishes 1 Sep 2025. Board sign-off required to bind procurement and legal teams.</div>
+          <div class="act-meta"><span class="badge bh">High</span><span class="badge bp">Policy</span></div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div class="act-ref">BOARD-09</div>
+        <div class="act-body">
+          <div class="act-title">BC Plan update &amp; DR test mandate</div>
+          <div class="act-desc">BC plan last reviewed February 2025. DR test overdue 3 months. Board to mandate Q4 DR test and BC plan annual update once AWS secondary region is provisioned.</div>
+          <div class="act-meta"><span class="badge bh">High</span><span class="badge bp">Governance</span></div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div class="act-ref">BOARD-10</div>
+        <div class="act-body">
+          <div class="act-title">POPIA breach notification policy approval</div>
+          <div class="act-desc">POPIA s22 breach notification procedure requires Board-approved policy before the IO can act. Draft policy prepared pending IO appointment. Board sign-off required alongside IO ratification.</div>
+          <div class="act-meta"><span class="badge bc">Critical</span><span class="badge bp">Regulatory</span></div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div class="act-ref">BOARD-11</div>
+        <div class="act-body">
+          <div class="act-title">HR screening vendor CPA claim &mdash; Board awareness</div>
+          <div class="act-desc">CPA claim against HR screening vendor (847 assessments, 214 gender-biased rejections) documented by 6 June 2025. Potential R2M+ claim. Board to be briefed and Legal to confirm claim strategy at July committee.</div>
+          <div class="act-meta"><span class="badge bh">High</span><span class="badge bc">Legal</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="cb0">
+      <div class="st">Board item risk consequence matrix</div>
+      <div class="tw" style="margin-bottom:0">
+        <table class="dt">
+          <thead><tr>
+            <th>Item</th>
+            <th style="width:100px" class="ctr">If deferred beyond Jul</th>
+            <th style="width:90px" class="ctr">Financial risk</th>
+            <th style="width:70px" class="ctr">Rating</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="font-weight:700">BOARD-01 &mdash; EDR R18M</td><td class="ctr">PCI-DSS ROC failure risk</td><td class="ctr v-r">R50M+ fines</td><td class="ctr"><span class="badge bc">Critical</span></td></tr>
+            <tr><td style="font-weight:700">BOARD-02 &mdash; AWS R12M</td><td class="ctr">Total DR exposure remains</td><td class="ctr v-r">Unquantified</td><td class="ctr"><span class="badge bc">Critical</span></td></tr>
+            <tr><td style="font-weight:700">BOARD-03 &mdash; IO appoint</td><td class="ctr">Regulator enforcement</td><td class="ctr v-r">Up to R10M</td><td class="ctr"><span class="badge bc">Critical</span></td></tr>
+            <tr><td style="font-weight:700">BOARD-04 &mdash; Ethics Panel</td><td class="ctr">AI moratorium continues</td><td class="ctr v-a">Opportunity cost</td><td class="ctr"><span class="badge bh">High</span></td></tr>
+            <tr><td style="font-weight:700">BOARD-05 &mdash; Azure SLA</td><td class="ctr">Continued uncompensated outages</td><td class="ctr v-a">R500K+/qtr</td><td class="ctr"><span class="badge bh">High</span></td></tr>
+            <tr><td style="font-weight:700">BOARD-06 &mdash; Vodacom</td><td class="ctr">WAN reliability deteriorates</td><td class="ctr v-a">R200K+/qtr SLA</td><td class="ctr"><span class="badge bh">High</span></td></tr>
+            <tr><td style="font-weight:700">BOARD-07 &mdash; NCR Voyix</td><td class="ctr">POS backlog 412 tickets grows</td><td class="ctr v-a">R1.4M/qtr impact</td><td class="ctr"><span class="badge bh">High</span></td></tr>
+            <tr><td style="font-weight:700">BOARD-10 &mdash; POPIA breach</td><td class="ctr">No breach notification capability</td><td class="ctr v-r">Up to R10M</td><td class="ctr"><span class="badge bc">Critical</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════ TAB 4 — VENDOR ESCALATIONS -->
+<div class="panel" id="p4">
+
+  <p class="intro">Six vendor escalations are currently open across three vendors: Vodacom (4 active SLA breach disputes and 1 structural reliability complaint), Microsoft Azure (1 SLA renegotiation and 1 disk tier performance escalation), and NCR Voyix (1 hardware supply delay). All vendor escalations are tracked in ServiceNow and reported to the Commercial and Legal teams monthly. SLA credit claims total R110 200 from Vodacom, of which R31 000 is approved and R79 200 is outstanding.</p>
+
+  <div class="mrow">
+    <div class="mc"><div class="ml">Total vendor escalations</div><div class="mv" style="color:var(--at)">6</div><div class="ms">Vodacom 4 &bull; Azure 1 &bull; NCR 1</div></div>
+    <div class="mc"><div class="ml">SLA credits claimed</div><div class="mv" style="color:var(--at)">R110K</div><div class="ms">Vodacom &mdash; MTD</div></div>
+    <div class="mc"><div class="ml">Credits approved</div><div class="mv" style="color:var(--gt)">R31K</div><div class="ms">2 of 6 claims settled</div></div>
+    <div class="mc"><div class="ml">Credits outstanding</div><div class="mv" style="color:var(--at)">R79K</div><div class="ms">4 claims in dispute</div></div>
+    <div class="mc"><div class="ml">Azure SLA clause</div><div class="mv" style="color:var(--rt)">None</div><div class="ms">No penalty in MSA</div></div>
+    <div class="mc"><div class="ml">NCR Voyix hardware ETA</div><div class="mv" style="color:var(--at)">Q3 2025</div><div class="ms">110-store POS replacement</div></div>
+    <div class="mc"><div class="ml">Vodacom account review</div><div class="mv" style="color:var(--at)">Q3 2025</div><div class="ms">Formal contract review</div></div>
+    <div class="mc"><div class="ml">Escalated to VP level</div><div class="mv">3</div><div class="ms">Azure &bull; Vodacom &bull; NCR</div></div>
+  </div>
+
+  <div class="cg">
+    <div>
+      <!-- Vodacom escalation detail -->
+      <div class="cb">
+        <div class="st">Vodacom MPLS &mdash; escalation log</div>
+
+        <div class="card" style="border-left-color:#E24B4A">
+          <div class="card-hdr"><span class="card-title">ESC-VOD-001 &mdash; Active P1 INC-0440 &mdash; Polokwane&ndash;Mokopane fibre cut</span><span class="badge bc">Active</span></div>
+          <div class="card-sub">Fibre cut on N1 duct (third-party civil works). 23 stores affected, 4 isolated. Repair crew ETA 09:00 SAST. SLA breach: P1 MTTR target 4h, current duration 4h 16m. Formal SLA notice lodged MGSA-SLA-2025-0440. Credit value to be determined post-resolution.</div>
+          <div style="margin-top:8px">
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">SLA breach ref</span><span class="stat-val" style="font-size:11px">MGSA-SLA-2025-0440</span></div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Vodacom NOC contact</span><span class="stat-val" style="font-size:11px">Bridge active</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Credit status</span><span class="stat-val" style="font-size:11px"><span class="badge bm">Pending resolution</span></span></div>
+          </div>
+        </div>
+
+        <div class="card" style="border-left-color:#EF9F27">
+          <div class="card-hdr"><span class="card-title">ESC-VOD-002 &mdash; Structural reliability complaint &mdash; 6 breaches in 6 weeks</span><span class="badge bh">Formal complaint</span></div>
+          <div class="card-sub">6 separate MPLS SLA breach events in May 2025, all affecting Limpopo and Mpumalanga corridor. Vodacom account manager meeting scheduled. MGSA position: Vodacom is in material breach of SLA schedule. Requesting service improvement plan and root cause report. Board authority sought for contract review and diversification mandate.</div>
+          <div style="margin-top:8px">
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Breaches this month</span><span class="stat-val" style="font-size:11px">6</span></div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">AM meeting date</span><span class="stat-val" style="font-size:11px">28 May 2025</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Service improvement plan</span><span class="stat-val" style="font-size:11px"><span class="badge bm">Requested</span></span></div>
+          </div>
+        </div>
+
+        <div class="cb0" style="padding:12px">
+          <div class="st">Vodacom SLA credit register &mdash; MTD</div>
+          <div class="tw" style="margin-bottom:0">
+            <table class="dt">
+              <thead><tr>
+                <th>Ref</th>
+                <th style="width:70px" class="ctr">Date</th>
+                <th style="width:55px" class="ctr">Stores</th>
+                <th style="width:70px" class="ctr">Duration</th>
+                <th style="width:70px" class="num">Credit (R)</th>
+                <th style="width:80px" class="ctr">Status</th>
+              </tr></thead>
+              <tbody>
+                <tr><td style="font-weight:700">MGSA-SLA-0440</td><td class="ctr">20 May</td><td class="ctr">23</td><td class="ctr">Active</td><td class="num v-at">TBD</td><td class="ctr"><span class="badge bm">Active</span></td></tr>
+                <tr><td style="font-weight:700">MGSA-SLA-0431</td><td class="ctr">14 May</td><td class="ctr">8</td><td class="ctr">3h 22m</td><td class="num">18 400</td><td class="ctr"><span class="badge bp">Lodged</span></td></tr>
+                <tr><td style="font-weight:700">MGSA-SLA-0419</td><td class="ctr">9 May</td><td class="ctr">11</td><td class="ctr">5h 07m</td><td class="num">28 700</td><td class="ctr"><span class="badge bp">Lodged</span></td></tr>
+                <tr><td style="font-weight:700">MGSA-SLA-0408</td><td class="ctr">4 May</td><td class="ctr">6</td><td class="ctr">2h 41m</td><td class="num v-g">11 200</td><td class="ctr"><span class="badge bg">Approved</span></td></tr>
+                <tr><td style="font-weight:700">MGSA-SLA-0397</td><td class="ctr">29 Apr</td><td class="ctr">14</td><td class="ctr">4h 58m</td><td class="num">32 100</td><td class="ctr"><span class="badge bp">Lodged</span></td></tr>
+                <tr><td style="font-weight:700">MGSA-SLA-0388</td><td class="ctr">22 Apr</td><td class="ctr">9</td><td class="ctr">3h 14m</td><td class="num v-g">19 800</td><td class="ctr"><span class="badge bg">Approved</span></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- Azure escalation -->
+      <div class="cb">
+        <div class="st">Microsoft Azure &mdash; escalations</div>
+
+        <div class="card" style="border-left-color:#E24B4A">
+          <div class="card-hdr"><span class="card-title">ESC-AZU-001 &mdash; No SLA penalty clause in MSA &mdash; commercial exposure</span><span class="badge bc">Legal escalation</span></div>
+          <div class="card-sub">Azure MSA (3-year EA, March 2027) contains no SLA penalty clause. MGSA has no commercial remedy for Azure-caused outages. SAP I/O saturation (4 P1s in May, est. R2M+ business impact) is uncompensated. Legal is negotiating with Microsoft. Microsoft is resisting. Board authority sought to escalate to Azure executive sponsor. Renewal leverage window: November 2026.</div>
+          <div style="margin-top:8px">
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Legal owner</span><span class="stat-val" style="font-size:11px">Legal / CPO</span></div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Microsoft position</span><span class="stat-val" style="font-size:11px">Resisting penalty clause</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Escalation path</span><span class="stat-val" style="font-size:11px">Board mandate to exec sponsor</span></div>
+          </div>
+        </div>
+
+        <div class="card" style="border-left-color:#EF9F27">
+          <div class="card-hdr"><span class="card-title">ESC-AZU-002 &mdash; Premium SSD P30 undersized &mdash; SAP I/O burst exhaustion</span><span class="badge bh">Performance escalation</span></div>
+          <div class="card-sub">Azure Premium SSD P30 tier exhausts burst credits during SAP overnight batch window (03:00&ndash;06:00 SAST), causing P1 incidents. 4 recurring P1s in May 2025. Upgrade to P50 eliminates burst credit dependency. Azure TAM has confirmed the remediation. Disk upgrade approval: VP Infra / CFO. R38K/month additional cost. Due 31 May.</div>
+          <div style="margin-top:8px">
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Azure TAM recommendation</span><span class="stat-val" style="font-size:11px">Upgrade P30 &rarr; P50</span></div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Monthly cost delta</span><span class="stat-val" style="font-size:11px">+R38K</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Approval status</span><span class="stat-val" style="font-size:11px"><span class="badge bm">VP Infra / CFO pending</span></span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NCR Voyix -->
+      <div class="cb">
+        <div class="st">NCR Voyix &mdash; escalation</div>
+        <div class="card" style="border-left-color:#EF9F27;margin-bottom:0">
+          <div class="card-hdr"><span class="card-title">ESC-NCR-001 &mdash; EOS POS hardware supply delay &mdash; 110 stores</span><span class="badge bh">Supply escalation</span></div>
+          <div class="card-sub">110 stores are running end-of-support Verifone POS firmware with no vendor patch available. NCR Voyix hardware replacement order was placed in February 2025. Supply ETA has moved from Q2 to Q3&ndash;Q4 2025, creating an extended PCI-DSS non-conformance window and generating 412 backlog support tickets. MGSA is seeking supply contract enforcement and priority allocation.</div>
+          <div style="margin-top:8px">
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Order date</span><span class="stat-val" style="font-size:11px">February 2025</span></div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Original ETA</span><span class="stat-val" style="font-size:11px">Q2 2025</span></div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">Revised ETA</span><span class="stat-val" style="font-size:11px">Q3&ndash;Q4 2025</span></div>
+            <div class="stat-row" style="padding:4px 0"><span class="stat-label" style="font-size:11px">PCI-DSS impact</span><span class="stat-val" style="font-size:11px">Req 6.3.3 non-conformance extends</span></div>
+            <div class="stat-row" style="padding:4px 0;border-bottom:none"><span class="stat-label" style="font-size:11px">Escalation action</span><span class="stat-val" style="font-size:11px">VP Infra to NCR AM</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Vendor escalation summary -->
+      <div class="cb0">
+        <div class="st">Vendor escalation ownership &amp; next actions</div>
+        <div class="stat-row"><span class="stat-label"><strong>Vodacom</strong> &mdash; AM meeting 28 May</span><span class="stat-val">VP Infra / CPO</span></div>
+        <div class="stat-row"><span class="stat-label"><strong>Vodacom</strong> &mdash; Service improvement plan request</span><span><span class="badge bm">Requested &mdash; due Jun</span></span></div>
+        <div class="stat-row"><span class="stat-label"><strong>Vodacom</strong> &mdash; Credit R79K outstanding &mdash; escalate if not approved by 31 May</span><span class="stat-val">Legal</span></div>
+        <div class="stat-row"><span class="stat-label"><strong>Azure</strong> &mdash; SLA penalty clause &mdash; Board mandate needed</span><span><span class="badge bc">Board Jul</span></span></div>
+        <div class="stat-row"><span class="stat-label"><strong>Azure</strong> &mdash; Disk tier P50 upgrade &mdash; CFO approval needed</span><span><span class="badge bm">Due 31 May</span></span></div>
+        <div class="stat-row"><span class="stat-label"><strong>NCR Voyix</strong> &mdash; Priority supply allocation request</span><span><span class="badge bp">In progress</span></span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════ TAB 5 — OVERDUE ACTIONS -->
+<div class="panel" id="p5">
+
+  <p class="intro">19 governance actions are tracked across all domains: 9 are past their agreed completion dates and 10 are approaching them. Actions span POPIA compliance, PIR completion, audit findings, vendor SLA processing, and regulatory deadlines. Overdue actions are rated by escalation urgency and the business or legal consequence of continued non-completion. All overdue actions are reviewed weekly by the NOCC Manager and monthly by the CIO.</p>
+
+  <div class="mrow">
+    <div class="mc"><div class="ml">Tracked actions total</div><div class="mv" style="color:var(--rt)">19</div><div class="ms">9 past due &bull; 10 upcoming</div></div>
+    <div class="mc"><div class="ml">Critical rated</div><div class="mv" style="color:var(--rt)">7</div><div class="ms">Legal / patient safety</div></div>
+    <div class="mc"><div class="ml">High rated</div><div class="mv" style="color:var(--ot)">7</div><div class="ms">Operational / regulatory</div></div>
+    <div class="mc"><div class="ml">Medium rated</div><div class="mv" style="color:var(--at)">5</div><div class="ms">Process / governance</div></div>
+    <div class="mc"><div class="ml">Longest overdue</div><div class="mv" style="color:var(--rt)">3 months</div><div class="ms">DR test &mdash; due Feb 2025</div></div>
+    <div class="mc"><div class="ml">Avg days overdue</div><div class="mv" style="color:var(--at)">47d</div><div class="ms">Illustrative, past-due items</div></div>
+    <div class="mc"><div class="ml">Items requiring Board</div><div class="mv" style="color:var(--at)">4</div><div class="ms">Blocked on decisions</div></div>
+    <div class="mc"><div class="ml">Items owner-confirmed</div><div class="mv" style="color:var(--gt)">19</div><div class="ms">All have named owner</div></div>
+  </div>
+
+  <div class="tw sh">
+    <table class="dt">
+      <thead><tr>
+        <th style="width:75px">Ref</th>
+        <th style="width:90px">Domain</th>
+        <th>Overdue action</th>
+        <th style="width:80px" class="ctr">Original due</th>
+        <th style="width:70px" class="ctr">Days over</th>
+        <th style="width:75px">Owner</th>
+        <th style="width:80px" class="ctr">Blocked by</th>
+        <th style="width:70px" class="ctr">Rating</th>
+      </tr></thead>
+      <tbody>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-01</td>
+          <td class="mid"><span class="badge bc">POPIA</span></td>
+          <td>Information Officer appointment &amp; registration with Information Regulator (POPIA s55). All POPIA rights and breach notification gated on this.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">31 Jul 2025</td>
+          <td class="ctr mid" style="color:var(--at)">Due in 72d</td>
+          <td class="mid">Board / CIO</td>
+          <td class="ctr mid"><span class="badge bpu">Board decision</span></td>
+          <td class="ctr mid"><span class="badge bc">Critical</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-02</td>
+          <td class="mid"><span class="badge bc">POPIA</span></td>
+          <td>Data subject rights process published and operational (access, correction, deletion, objection). POPIA s23&ndash;25. No process exists currently.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">Overdue</td>
+          <td class="ctr mid" style="color:var(--rt)">Structural</td>
+          <td class="mid">IO / CDO</td>
+          <td class="ctr mid"><span class="badge bc">IO not appointed</span></td>
+          <td class="ctr mid"><span class="badge bc">Critical</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-03</td>
+          <td class="mid"><span class="badge bc">POPIA</span></td>
+          <td>POPIA s22 breach notification procedure documented, tested, and linked to IO role. No runbook exists. Notification to regulator within required timeline impossible without this.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">Overdue</td>
+          <td class="ctr mid" style="color:var(--rt)">Structural</td>
+          <td class="mid">CISO / IO</td>
+          <td class="ctr mid"><span class="badge bc">IO not appointed</span></td>
+          <td class="ctr mid"><span class="badge bc">Critical</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-04</td>
+          <td class="mid"><span class="badge bc">POPIA</span></td>
+          <td>PAIA manual updated for FY2025 and published on MGSA website. Annual statutory obligation (Promotion of Access to Information Act s51). Last updated FY2024.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">Overdue</td>
+          <td class="ctr mid" style="color:var(--rt)">90d+ overdue</td>
+          <td class="mid">IO / Legal</td>
+          <td class="ctr mid"><span class="badge bc">IO not appointed</span></td>
+          <td class="ctr mid"><span class="badge bh">High</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-05</td>
+          <td class="mid"><span class="badge bh">EEA / CPA</span></td>
+          <td>CPA s55 fitness-for-purpose claim against HR screening vendor formally documented. 847 assessments affected, 214 gender-biased. Limitation period risk if not filed by 6 June 2025.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">6 Jun 2025</td>
+          <td class="ctr mid" style="color:var(--rt)">17 days</td>
+          <td class="mid">Legal</td>
+          <td class="ctr mid"><span class="badge bm">In progress</span></td>
+          <td class="ctr mid"><span class="badge bc">Critical</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-06</td>
+          <td class="mid"><span class="badge bh">EEA</span></td>
+          <td>EEA s6 bias testing of all AI models used in employment decisions. Only 4 of 14 AI models tested. HR screening, SAP SuccessFactors, PriceSparrow, and Signify not tested against SA protected categories.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">Overdue</td>
+          <td class="ctr mid" style="color:var(--rt)">30d+ overdue</td>
+          <td class="mid">CDO / CHRO</td>
+          <td class="ctr mid"><span class="badge bpu">Ethics Panel forming</span></td>
+          <td class="ctr mid"><span class="badge bc">Critical</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-07</td>
+          <td class="mid"><span class="badge bpu">DR / ISO</span></td>
+          <td>Full DR failover test &mdash; mandated 6-monthly. Last test: 9 months ago (August 2024). Cannot test without DR target region. AWS secondary required first.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">Feb 2025</td>
+          <td class="ctr mid" style="color:var(--rt)">90d+ overdue</td>
+          <td class="mid">VP Infra / CISO</td>
+          <td class="ctr mid"><span class="badge bpu">Board AWS decision</span></td>
+          <td class="ctr mid"><span class="badge bc">Critical</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-08</td>
+          <td class="mid"><span class="badge bm">PIR</span></td>
+          <td>PIR-003 &mdash; SAP batch-window recurring P1 (4 incidents). PIR due 16 May 2025. Not completed. Root cause unresolved. 5th SAP P1 in progress at time of this report.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">16 May 2025</td>
+          <td class="ctr mid" style="color:var(--rt)">4 days overdue</td>
+          <td class="mid">VP Infra / SAP Basis</td>
+          <td class="ctr mid"><span class="badge bm">Active P1</span></td>
+          <td class="ctr mid"><span class="badge bc">Critical</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-09</td>
+          <td class="mid"><span class="badge bm">PIR</span></td>
+          <td>PIR-002 &mdash; December 2024 peak trading outage (8 P1s). Draft circulated. VP sign-off not received. Due date 5 May 2025.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">5 May 2025</td>
+          <td class="ctr mid" style="color:var(--rt)">15 days overdue</td>
+          <td class="mid">VP Infra</td>
+          <td class="ctr mid"><span class="badge bm">Awaiting sign-off</span></td>
+          <td class="ctr mid"><span class="badge bh">High</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-10</td>
+          <td class="mid"><span class="badge bpu">ISO 27001</span></td>
+          <td>Azure MSA SLA penalty clause negotiated. No commercial remedy for Azure outages. Legal negotiating. Due 31 Aug 2025 (for ISO 27001 A.17.1.1 evidence). Current: no penalty clause.</td>
+          <td class="ctr mid">31 Aug 2025</td>
+          <td class="ctr mid" style="color:var(--at)">Upcoming</td>
+          <td class="mid">Legal / CPO</td>
+          <td class="ctr mid"><span class="badge bpu">Board escalation</span></td>
+          <td class="ctr mid"><span class="badge bh">High</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-11</td>
+          <td class="mid"><span class="badge bg">SAHPRA</span></td>
+          <td>Cold-chain IoT sensor rollout to 84 stores with temperature recording gaps. Approved. 84 stores to be equipped by August 2025. Currently 13 weeks into 16-week programme.</td>
+          <td class="ctr mid">31 Aug 2025</td>
+          <td class="ctr mid" style="color:var(--at)">In progress</td>
+          <td class="mid">Pharmacy Dir.</td>
+          <td class="ctr mid"><span class="badge bm">On track</span></td>
+          <td class="ctr mid"><span class="badge bm">Medium</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-12</td>
+          <td class="mid"><span class="badge bp">PCI-DSS</span></td>
+          <td>PCI-DSS Req 6.3.3 &mdash; all patches applied to POS. 110 EOS stores unpatched. Compensating control document for QSA not yet finalised. ROC October 2025 at risk without QSA sign-off on compensating control.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">Overdue</td>
+          <td class="ctr mid" style="color:var(--rt)">Structural</td>
+          <td class="mid">CISO / CPO</td>
+          <td class="ctr mid"><span class="badge bpu">Board BOARD-07</span></td>
+          <td class="ctr mid"><span class="badge bh">High</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-13</td>
+          <td class="mid"><span class="badge bpu">ISO 27001</span></td>
+          <td>Windows 11 migration for 234 devices on unsupported OS. 61% complete. 234 remaining including 110 EOS POS (hardware-gated) and 82 dispensing terminals. Due Oct 2025.</td>
+          <td class="ctr mid">Oct 2025</td>
+          <td class="ctr mid" style="color:var(--at)">On track</td>
+          <td class="mid">VP Infra / CISO</td>
+          <td class="ctr mid"><span class="badge bm">In progress</span></td>
+          <td class="ctr mid"><span class="badge bm">Medium</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-14</td>
+          <td class="mid"><span class="badge bg">FIC Act</span></td>
+          <td>AML staff training &mdash; 74% complete vs 100% required for accountable institution. Refresher training module launched. Target 100% completion by September 2025.</td>
+          <td class="ctr mid">30 Sep 2025</td>
+          <td class="ctr mid" style="color:var(--at)">In progress</td>
+          <td class="mid">CHRO / Legal</td>
+          <td class="ctr mid"><span class="badge bm">On track</span></td>
+          <td class="ctr mid"><span class="badge bm">Medium</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-15</td>
+          <td class="mid"><span class="badge bh">Ops</span></td>
+          <td>Manual operations SOP issued to 188 stores without documented fallback. NOCC quarterly drill to verify coverage. Target: 100% by August 2025. Currently 71%.</td>
+          <td class="ctr mid">Aug 2025</td>
+          <td class="ctr mid" style="color:var(--at)">In progress</td>
+          <td class="mid">NOCC Manager</td>
+          <td class="ctr mid"><span class="badge bm">On track</span></td>
+          <td class="ctr mid"><span class="badge bm">Medium</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-16</td>
+          <td class="mid"><span class="badge bh">Ops</span></td>
+          <td>PIR-001 closure &mdash; Vodacom rural WAN failover failure (Feb 2025). Fix applied. Awaiting CISO sign-off for formal closure. Overdue since 15 March 2025.</td>
+          <td class="ctr mid" style="color:var(--rt);font-weight:700">15 Mar 2025</td>
+          <td class="ctr mid" style="color:var(--rt)">66 days overdue</td>
+          <td class="mid">CISO / VP Infra</td>
+          <td class="ctr mid"><span class="badge bm">Awaiting CISO sign-off</span></td>
+          <td class="ctr mid"><span class="badge bh">High</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-17</td>
+          <td class="mid"><span class="badge bpu">ISO 27001</span></td>
+          <td>Azure OpenAI acceptable use policy published. Staff accessing LLM services without governance. R184K unbudgeted Q2 Azure spend. Policy drafted &mdash; CDO review in progress.</td>
+          <td class="ctr mid">30 Sep 2025</td>
+          <td class="ctr mid" style="color:var(--at)">Upcoming</td>
+          <td class="mid">CDO / CISO</td>
+          <td class="ctr mid"><span class="badge bm">In review</span></td>
+          <td class="ctr mid"><span class="badge bh">High</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-18</td>
+          <td class="mid"><span class="badge bh">Ops</span></td>
+          <td>Vodacom formal SLA breach notices issued per contract for 23 stores affected on 22 Jun 2025 deadline (relating to prior 2024 ISP SLA notices referenced in legal correspondence). Formal notice letter in preparation.</td>
+          <td class="ctr mid">22 Jun 2025</td>
+          <td class="ctr mid" style="color:var(--at)">33 days</td>
+          <td class="mid">VP Infra / Legal</td>
+          <td class="ctr mid"><span class="badge bm">Drafting</span></td>
+          <td class="ctr mid"><span class="badge bh">High</span></td>
+        </tr>
+        <tr>
+          <td style="font-weight:700" class="mid">OD-19</td>
+          <td class="mid"><span class="badge bh">Ops</span></td>
+          <td>Second Incident Manager policy (TIMP-003 GA-04) implemented for concurrent P1 events. Currently both P1-0441 and P1-0440 managed by same IM. Policy revision due 1 Jul 2025.</td>
+          <td class="ctr mid">1 Jul 2025</td>
+          <td class="ctr mid" style="color:var(--at)">42 days</td>
+          <td class="mid">NOCC Manager</td>
+          <td class="ctr mid"><span class="badge bm">Policy draft</span></td>
+          <td class="ctr mid"><span class="badge bm">Medium</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════ TAB 6 — ESCALATION PATHWAYS -->
+<div class="panel" id="p6">
+
+  <p class="intro">MGSA's operational escalation pathways define who is notified, when, and through what channel for each category of operational issue. Pathways are tiered by severity and type: technology incidents follow the ITSM priority framework; compliance and regulatory issues route through the IO and Legal; vendor disputes route through Commercial and Legal; Board items are presented at the quarterly Technology and Risk Committee. All pathways are documented in the MGSA Escalation &amp; Governance Framework (EGF-2024-001).</p>
+
+  <div class="cg">
+    <div>
+      <!-- Technology incident pathway -->
+      <div class="cb">
+        <div class="st">Technology incident escalation pathway</div>
+        <div class="tl">
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#E24B4A"></div>
+            <div class="tl-time">Immediate &mdash; automated</div>
+            <div class="tl-actor">Azure Sentinel / Darktrace &rarr; NOCC Dashboard</div>
+            <div class="tl-title">Automated alert detection</div>
+            <div class="tl-desc">Threshold breach triggers NOCC dashboard alert and Teams notification. Response target: NOCC analyst acknowledges within 3 minutes.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#E24B4A"></div>
+            <div class="tl-time">0&ndash;15 min &mdash; NOCC IM</div>
+            <div class="tl-actor">NOCC Shift Manager</div>
+            <div class="tl-title">P1/P2 declaration &amp; bridge activation</div>
+            <div class="tl-desc">NOCC Shift Manager declares priority, opens ServiceNow incident, activates Teams bridge, pages Technical Lead. P1: bridge within 15 min. P2: bridge within 30 min.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#EF9F27"></div>
+            <div class="tl-time">0&ndash;30 min &mdash; duty manager</div>
+            <div class="tl-actor">VP Infrastructure / On-call duty manager</div>
+            <div class="tl-title">Technical authority joins bridge</div>
+            <div class="tl-desc">Duty manager paged within 10 minutes of P1 declaration. Joins bridge, confirms technical lead, authorises vendor escalation and resource deployment.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#EF9F27"></div>
+            <div class="tl-time">30 min &mdash; executive notification</div>
+            <div class="tl-actor">NOCC IM &rarr; CIO, CFO, CEO (SMS + Teams)</div>
+            <div class="tl-title">Executive notification (P1 only)</div>
+            <div class="tl-desc">CIO notified within 30 minutes of P1 declaration. CFO and CEO notified if financial impact &gt;R100K or patient safety risk. 30-minute update cadence maintained.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#4CAF50"></div>
+            <div class="tl-time">30-min cadence &mdash; ongoing</div>
+            <div class="tl-actor">NOCC IM &rarr; All bridge participants</div>
+            <div class="tl-title">Bridge update cadence</div>
+            <div class="tl-desc">30-minute updates issued to bridge and executive until resolution. Business liaison joined within 30 minutes for operational impact confirmation. Workarounds communicated immediately.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#4CAF50"></div>
+            <div class="tl-time">Resolution &amp; closure</div>
+            <div class="tl-actor">VP Infra + NOCC IM (joint)</div>
+            <div class="tl-title">Resolution sign-off &amp; PIR scheduling</div>
+            <div class="tl-desc">Resolution confirmed by Technical Lead and VP Infra. Bridge closed by NOCC IM. PIR scheduled within 24 hours of closure. PIR report due within 5 business days.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regulatory pathway -->
+      <div class="cb0">
+        <div class="st">Regulatory &amp; compliance escalation pathway</div>
+        <div class="tl">
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#5C3A7A"></div>
+            <div class="tl-time">Detection &mdash; ongoing</div>
+            <div class="tl-actor">GRC Office / Legal / CDO</div>
+            <div class="tl-title">Compliance obligation identified or missed</div>
+            <div class="tl-desc">GRC office identifies obligation breach, regulatory deadline at risk, or new requirement. Logged in obligations register with owner and due date.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#9C6500"></div>
+            <div class="tl-time">Assessment &mdash; within 5 days</div>
+            <div class="tl-actor">IO (or Legal if IO not appointed) / CDO</div>
+            <div class="tl-title">Impact assessment &amp; escalation decision</div>
+            <div class="tl-desc">Regulatory exposure quantified. If fine / enforcement risk exists: escalate to CIO within 5 business days. If patient safety: immediate escalation to CMIO and CIO.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#C55A11"></div>
+            <div class="tl-time">Critical obligations &mdash; immediate</div>
+            <div class="tl-actor">CIO &rarr; CFO &rarr; Board (if material)</div>
+            <div class="tl-title">Board &amp; executive escalation</div>
+            <div class="tl-desc">Obligations with fines &gt;R1M or criminal sanction risk escalated to Board within 30 days. POPIA fine (up to R10M), PCI-DSS non-conformance, and NHA patient safety breaches meet this threshold.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#4CAF50"></div>
+            <div class="tl-time">Remediation &amp; reporting</div>
+            <div class="tl-actor">Assigned owner / GRC Office</div>
+            <div class="tl-title">Remediation plan &amp; regulator engagement</div>
+            <div class="tl-desc">Remediation plan agreed with Board. Regulator engagement managed by IO / Legal. Progress reported monthly to Technology Governance Committee and quarterly to Board.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px">
+      <!-- Automatic escalation triggers -->
+      <div class="cb">
+        <div class="st">Automatic escalation triggers &mdash; by event type</div>
+        <div class="tw" style="margin-bottom:0">
+          <table class="dt">
+            <thead><tr>
+              <th>Trigger event</th>
+              <th style="width:120px">Escalates to</th>
+              <th style="width:80px" class="ctr">Timeline</th>
+              <th style="width:90px" class="ctr">Channel</th>
+            </tr></thead>
+            <tbody>
+              <tr><td style="font-weight:700">P1 declared</td><td>NOCC IM &rarr; VP Infra</td><td class="ctr">15 min</td><td class="ctr"><span class="badge bp">Teams + page</span></td></tr>
+              <tr><td style="font-weight:700">P1 bridge open &gt;30 min</td><td>CIO, CFO, CEO</td><td class="ctr">30 min</td><td class="ctr"><span class="badge bp">SMS + Teams</span></td></tr>
+              <tr><td style="font-weight:700">P1 active &gt;1 hour</td><td>CIO auto-alert</td><td class="ctr">60 min</td><td class="ctr"><span class="badge bp">Auto Teams</span></td></tr>
+              <tr><td style="font-weight:700">P1 MTTR &gt;2 hours (breach)</td><td>CEO notification</td><td class="ctr">2h mark</td><td class="ctr"><span class="badge bc">SMS</span></td></tr>
+              <tr><td style="font-weight:700">Patient safety risk declared</td><td>CIO, CMIO, Pharmacy Dir.</td><td class="ctr">Immediate</td><td class="ctr"><span class="badge bc">Call + SMS</span></td></tr>
+              <tr><td style="font-weight:700">POPIA data breach suspected</td><td>CDO, CISO, Legal, IO</td><td class="ctr">Immediate</td><td class="ctr"><span class="badge bc">Call + SMS</span></td></tr>
+              <tr><td style="font-weight:700">2 concurrent P1s active</td><td>Second IM assigned</td><td class="ctr">Immediate</td><td class="ctr"><span class="badge bm">Auto-assign</span></td></tr>
+              <tr><td style="font-weight:700">P1 financial impact &gt;R500K</td><td>CFO notification</td><td class="ctr">30 min</td><td class="ctr"><span class="badge bp">Teams</span></td></tr>
+              <tr><td style="font-weight:700">Vendor SLA breach (P1 MTTR)</td><td>VP Infra &rarr; CPO / Legal</td><td class="ctr">At breach</td><td class="ctr"><span class="badge bm">Email + log</span></td></tr>
+              <tr><td style="font-weight:700">SAHPRA audit site incident</td><td>Pharmacy Dir. + CMIO</td><td class="ctr">Immediate</td><td class="ctr"><span class="badge bc">Call</span></td></tr>
+              <tr><td style="font-weight:700">Regulatory deadline &lt;30 days</td><td>CIO weekly briefing</td><td class="ctr">Weekly</td><td class="ctr"><span class="badge bp">Report</span></td></tr>
+              <tr><td style="font-weight:700">PIR overdue &gt;5 business days</td><td>NOCC Manager</td><td class="ctr">At 5d mark</td><td class="ctr"><span class="badge bm">ServiceNow</span></td></tr>
+              <tr><td style="font-weight:700">Audit finding overdue</td><td>CIO monthly review</td><td class="ctr">Monthly</td><td class="ctr"><span class="badge bp">Dashboard</span></td></tr>
+              <tr><td style="font-weight:700">Board item deferred 2nd time</td><td>CEO for direct decision</td><td class="ctr">At next meeting</td><td class="ctr"><span class="badge bc">Board paper</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Vendor escalation pathway -->
+      <div class="cb">
+        <div class="st">Vendor escalation pathway</div>
+        <div class="tl">
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#2E75B6"></div>
+            <div class="tl-time">Level 1 &mdash; NOCC operational</div>
+            <div class="tl-actor">NOCC IM &rarr; Vendor NOC</div>
+            <div class="tl-title">Vendor NOC engagement at incident declaration</div>
+            <div class="tl-desc">All P1 and P2 incidents involving a vendor system trigger an immediate vendor NOC contact. Reference number obtained within 15 minutes. ETA requested.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#EF9F27"></div>
+            <div class="tl-time">Level 2 &mdash; 1 hour</div>
+            <div class="tl-actor">VP Infra &rarr; Vendor TAM / Account Manager</div>
+            <div class="tl-title">TAM / AM escalation if ETA not received</div>
+            <div class="tl-desc">If vendor NOC cannot confirm ETA within 60 minutes, VP Infrastructure escalates to Vendor TAM or Account Manager. SLA breach notice sent at 2-hour mark.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#A61C00"></div>
+            <div class="tl-time">Level 3 &mdash; 4 hours (P1 SLA breach)</div>
+            <div class="tl-actor">CIO &rarr; Vendor Executive</div>
+            <div class="tl-title">Executive-to-executive escalation</div>
+            <div class="tl-desc">CIO escalates to vendor executive (Azure VP, Vodacom MD) if P1 not resolved within 4 hours. Formal SLA credit claim initiated. Board authority may be invoked for commercial escalation.</div>
+          </div>
+          <div class="tl-item">
+            <div class="tl-dot" style="background:#4CAF50"></div>
+            <div class="tl-time">Post-incident</div>
+            <div class="tl-actor">Legal / CPO &rarr; Vendor Account Management</div>
+            <div class="tl-title">SLA credit claim &amp; contract review</div>
+            <div class="tl-desc">SLA credit claim lodged within 24 hours of resolution. Credit value calculated per contract. If structural reliability concern: formal contract review requested within 30 days.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cb0">
+        <div class="st">Board escalation pathway &mdash; Technology &amp; Risk Committee</div>
+        <div class="stat-row"><span class="stat-label">Committee meets</span><span class="stat-val">Quarterly &mdash; July, Oct, Jan, Apr</span></div>
+        <div class="stat-row"><span class="stat-label">Papers due before committee</span><span class="stat-val">10 business days prior</span></div>
+        <div class="stat-row"><span class="stat-label">Technology items owner</span><span class="stat-val">CIO</span></div>
+        <div class="stat-row"><span class="stat-label">Investments &gt;R5M</span><span class="stat-val">Board approval required</span></div>
+        <div class="stat-row"><span class="stat-label">Regulatory fines &gt;R1M risk</span><span class="stat-val">Board notification required</span></div>
+        <div class="stat-row"><span class="stat-label">Next committee</span><span class="stat-val">July 2025 &mdash; 11 items on agenda</span></div>
+        <div class="stat-row"><span class="stat-label">Items deferred from April 2025</span><span class="stat-val">3 (Azure, IO, Ethics Panel)</span></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══════════════════════════════════ TAB 7 — GOVERNANCE & COMPLIANCE -->
+<div class="panel" id="p7">
+
+  <p class="intro">The MGSA Operational Escalation governance framework spans technology incident management (TIMP-003), regulatory compliance (GRC calendar), vendor management (Commercial Policy), and Board reporting (Technology and Risk Committee Charter). The escalation RACI below maps accountability across all active escalation types. The governance health score of 64% reflects the current gap between policy requirements and operational compliance &mdash; driven primarily by PIR completion rates (64%) and the unresolved IO appointment.</p>
+
+  <div class="mrow">
+    <div class="mc"><div class="ml">Governance health score</div><div class="mv" style="color:var(--at)">64%</div><div class="ms">Target: 90%</div></div>
+    <div class="mc"><div class="ml">Policy compliance (TIMP-003)</div><div class="mv" style="color:var(--at)">82%</div><div class="ms">PIR &amp; 2nd IM gaps</div></div>
+    <div class="mc"><div class="ml">PIR on-time rate</div><div class="mv" style="color:var(--rt)">64%</div><div class="ms">Target: 100%</div></div>
+    <div class="mc"><div class="ml">Exec notify SLA (P1)</div><div class="mv" style="color:var(--at)">81%</div><div class="ms">Target: 100%</div></div>
+    <div class="mc"><div class="ml">Audit finding response rate</div><div class="mv" style="color:var(--gt)">100%</div><div class="ms">All 14 responded</div></div>
+    <div class="mc"><div class="ml">Audit findings on-time close</div><div class="mv" style="color:var(--at)">43%</div><div class="ms">6 of 14 closed on time</div></div>
+    <div class="mc"><div class="ml">Vendor SLA report (monthly)</div><div class="mv" style="color:var(--gt)">Current</div><div class="ms">Legal + Commercial</div></div>
+    <div class="mc"><div class="ml">Board reporting current</div><div class="mv" style="color:var(--gt)">Yes</div><div class="ms">Last: April 2025</div></div>
+  </div>
+
+  <!-- RACI matrix -->
+  <div class="cb">
+    <div class="st">Escalation RACI matrix &mdash; all escalation types</div>
+    <div style="overflow-x:auto">
+      <table class="raci-table">
+        <thead>
+          <tr>
+            <td class="raci-hdr" style="text-align:left;min-width:180px">Escalation activity</td>
+            <td class="raci-hdr" style="min-width:75px">NOCC IM</td>
+            <td class="raci-hdr" style="min-width:75px">VP Infra</td>
+            <td class="raci-hdr" style="min-width:75px">CIO</td>
+            <td class="raci-hdr" style="min-width:75px">CISO</td>
+            <td class="raci-hdr" style="min-width:75px">CDO</td>
+            <td class="raci-hdr" style="min-width:75px">CFO</td>
+            <td class="raci-hdr" style="min-width:75px">Legal / IO</td>
+            <td class="raci-hdr" style="min-width:75px">Board</td>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="raci-lbl">P1 declaration</td>
+            <td class="raci-g">R</td><td class="raci-b">A</td><td class="raci-a">I</td><td class="raci-a">I</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">Bridge activation &amp; chairing</td>
+            <td class="raci-g">R</td><td class="raci-b">A</td><td class="raci-a">I</td><td class="raci-a">I</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">Executive notification (P1)</td>
+            <td class="raci-g">R</td><td class="raci-b">C</td><td class="raci-b">A</td><td class="raci-a">I</td><td class="raci-n">&mdash;</td><td class="raci-a">I</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">Vendor SLA breach notice</td>
+            <td class="raci-g">R</td><td class="raci-b">A</td><td class="raci-a">I</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-b">C</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">Vendor SLA credit claim</td>
+            <td class="raci-b">C</td><td class="raci-g">R</td><td class="raci-a">I</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-b">C</td><td class="raci-b">A</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">PIR scheduling &amp; facilitation</td>
+            <td class="raci-g">R</td><td class="raci-b">A</td><td class="raci-a">I</td><td class="raci-b">C</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">PIR sign-off &amp; closure</td>
+            <td class="raci-b">C</td><td class="raci-g">R</td><td class="raci-b">A</td><td class="raci-b">C</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">POPIA compliance escalation</td>
+            <td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-b">A</td><td class="raci-b">C</td><td class="raci-g">R</td><td class="raci-n">&mdash;</td><td class="raci-b">C</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">Regulatory breach notification</td>
+            <td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-b">A</td><td class="raci-b">C</td><td class="raci-b">C</td><td class="raci-n">&mdash;</td><td class="raci-g">R</td><td class="raci-n">&mdash;</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">Board investment escalation</td>
+            <td class="raci-n">&mdash;</td><td class="raci-b">C</td><td class="raci-g">R</td><td class="raci-b">C</td><td class="raci-b">C</td><td class="raci-b">C</td><td class="raci-b">C</td><td class="raci-b">A</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">Patient safety escalation</td>
+            <td class="raci-g">R</td><td class="raci-b">C</td><td class="raci-b">A</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-b">C</td><td class="raci-a">I</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">AI governance escalation</td>
+            <td class="raci-n">&mdash;</td><td class="raci-n">&mdash;</td><td class="raci-b">A</td><td class="raci-b">C</td><td class="raci-g">R</td><td class="raci-n">&mdash;</td><td class="raci-b">C</td><td class="raci-a">I</td>
+          </tr>
+          <tr>
+            <td class="raci-lbl">Audit finding escalation</td>
+            <td class="raci-n">&mdash;</td><td class="raci-b">C</td><td class="raci-b">A</td><td class="raci-b">C</td><td class="raci-b">C</td><td class="raci-b">C</td><td class="raci-b">C</td><td class="raci-a">I</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div style="font-size:11px;color:var(--text2);margin-top:10px;display:flex;gap:16px;flex-wrap:wrap">
+      <span><strong style="color:var(--gt)">R</strong> = Responsible (does the work)</span>
+      <span><strong style="color:var(--bt)">A</strong> = Accountable (final sign-off)</span>
+      <span><strong style="color:var(--at)">C</strong> = Consulted</span>
+      <span><strong>I</strong> = Informed</span>
+    </div>
+  </div>
+
+  <!-- Governance improvement actions -->
+  <div class="cg" style="margin-bottom:0">
+    <div class="cb0">
+      <div class="st">Governance improvement actions &mdash; open</div>
+      <div class="act-row">
+        <div class="act-ref">GA-01</div>
+        <div class="act-body">
+          <div class="act-title">PIR completion rate to 100% &mdash; 5-day closure window enforced</div>
+          <div class="act-desc">PIR completion rate at 64% vs 100% target. 3 PIRs outstanding. NOCC Manager to enforce closure window. VP sign-off SLA to be written into TIMP-003 revision.</div>
+          <div class="act-meta"><span class="badge bc">Critical</span><span class="badge bm">Due 31 May</span></div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div class="act-ref">GA-02</div>
+        <div class="act-body">
+          <div class="act-title">Problem management linkage &mdash; PIR findings auto-create Problem record</div>
+          <div class="act-desc">SAP batch pattern (4 P1s) has no Problem record with owner. ServiceNow workflow to auto-generate Problem from PIR finding. Owner: ITSM Admin. Due: 15 Jun 2025.</div>
+          <div class="act-meta"><span class="badge bh">High</span><span class="badge bp">Jun 2025</span></div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div class="act-ref">GA-03</div>
+        <div class="act-body">
+          <div class="act-title">Monthly escalation trend report at Technology Governance Committee</div>
+          <div class="act-desc">No structured monthly escalation report exists. Template to cover MTTR trend, open PIRs, SLA compliance, Board items, and overdue actions. Owner: NOCC Manager / CIO. Due: Jun 2025.</div>
+          <div class="act-meta"><span class="badge bm">Medium</span><span class="badge bp">Jun 2025</span></div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div class="act-ref">GA-04</div>
+        <div class="act-body">
+          <div class="act-title">Second Incident Manager policy for concurrent P1 events</div>
+          <div class="act-desc">Policy revision to TIMP-003 to mandate a second NOCC IM when 2 or more P1 incidents are active simultaneously. Auto-assignment rule in ServiceNow. Owner: NOCC Manager. Due: 1 Jul 2025.</div>
+          <div class="act-meta"><span class="badge bm">Medium</span><span class="badge bp">Jul 2025</span></div>
+        </div>
+      </div>
+      <div class="act-row">
+        <div class="act-ref">GA-05</div>
+        <div class="act-body">
+          <div class="act-title">Vendor escalation SLA enforcement &mdash; contractual review programme</div>
+          <div class="act-desc">Vodacom, Azure, and NCR Voyix contracts reviewed for penalty clause strength. Where enforcement is weak, commercial team mandated to renegotiate at next renewal window. Board authority required for Azure and Vodacom.</div>
+          <div class="act-meta"><span class="badge bh">High</span><span class="badge bpu">Board Jul</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cb0">
+      <div class="st">Governance policy register &mdash; current status</div>
+      <div class="tw" style="margin-bottom:0">
+        <table class="dt">
+          <thead><tr>
+            <th>Policy</th>
+            <th style="width:65px" class="ctr">Version</th>
+            <th style="width:80px" class="ctr">Issued</th>
+            <th style="width:80px" class="ctr">Next review</th>
+            <th style="width:80px" class="ctr">Status</th>
+          </tr></thead>
+          <tbody>
+            <tr><td style="font-weight:700">Technology Incident Management Policy (TIMP-003)</td><td class="ctr">3.0</td><td class="ctr">Jan 2025</td><td class="ctr">Jan 2026</td><td class="ctr"><span class="badge bg">Current</span></td></tr>
+            <tr><td style="font-weight:700">Escalation &amp; Governance Framework (EGF-001)</td><td class="ctr">2.1</td><td class="ctr">Mar 2024</td><td class="ctr">Mar 2026</td><td class="ctr"><span class="badge bg">Current</span></td></tr>
+            <tr><td style="font-weight:700">Vendor Management Policy (VMP-002)</td><td class="ctr">2.0</td><td class="ctr">Jul 2024</td><td class="ctr">Jul 2025</td><td class="ctr"><span class="badge bm">Review due</span></td></tr>
+            <tr><td style="font-weight:700">Business Continuity Policy (BCP-004)</td><td class="ctr">4.0</td><td class="ctr">Feb 2025</td><td class="ctr">Feb 2026</td><td class="ctr"><span class="badge bg">Current</span></td></tr>
+            <tr><td style="font-weight:700">POPIA &amp; Privacy Policy</td><td class="ctr">1.2</td><td class="ctr">Jan 2024</td><td class="ctr">Jul 2025</td><td class="ctr"><span class="badge bc">Overdue</span></td></tr>
+            <tr><td style="font-weight:700">AI Governance Policy</td><td class="ctr">DRAFT</td><td class="ctr">&mdash;</td><td class="ctr">Sep 2025</td><td class="ctr"><span class="badge bm">Draft</span></td></tr>
+            <tr><td style="font-weight:700">Acceptable Use Policy (AUP incl. AI)</td><td class="ctr">DRAFT</td><td class="ctr">&mdash;</td><td class="ctr">Sep 2025</td><td class="ctr"><span class="badge bm">Draft</span></td></tr>
+            <tr><td style="font-weight:700">Information Security Policy (ISP-003)</td><td class="ctr">3.0</td><td class="ctr">Aug 2024</td><td class="ctr">Aug 2025</td><td class="ctr"><span class="badge bm">Review due</span></td></tr>
+            <tr><td style="font-weight:700">Change Management Policy (CMP-002)</td><td class="ctr">2.0</td><td class="ctr">Oct 2024</td><td class="ctr">Oct 2025</td><td class="ctr"><span class="badge bg">Current</span></td></tr>
+            <tr><td style="font-weight:700">PAIA Manual</td><td class="ctr">FY2024</td><td class="ctr">Mar 2024</td><td class="ctr">Mar 2025</td><td class="ctr"><span class="badge bc">Overdue 90d+</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<section class="portfolio-about" id="about-this-portfolio">
+  <h2>About This Portfolio</h2>
+  <p><strong>Prepared by:</strong> Divan Gerber &mdash; Independent Portfolio Exercise.</p>
+  <p>This page is part of a self-directed learning project built to demonstrate practical Governance, Risk &amp; Compliance and IT Audit capability. &ldquo;MedRetail Group South Africa&rdquo; and its &ldquo;Enterprise Operations &amp; Service Governance Office&rdquo; are fictional constructs created for this exercise. No real organization, department, employee, board, or confidential data is represented here, and the dashboard is a static design prototype, not a live system. Real vendor and product names (listed in the banner above) are scenario context only; every figure, escalation, and dispute attributed to them is invented and says nothing about their actual performance. The Board decisions, approvals, and sign-offs shown are simulated scenario content, not decisions that happened. This is not a role or office Divan Gerber has held.</p>
+</section>
+
+</body>
+</html>
